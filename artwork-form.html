@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Artwork Details — Huevia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" type="image/svg+xml" href="images/logo/favicon-mark.svg">
+<style>
+  body { background: var(--bg); padding: 40px var(--pad) 100px; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-family: var(--font-heading); font-size: 1.9rem; margin-bottom: 8px; }
+  .wrap > p { color: var(--text-light); font-size: .9rem; margin-bottom: 28px; }
+
+  .a-field { margin-bottom: 16px; }
+  .a-field label { display: block; font-size: .78rem; font-weight: 500; margin-bottom: 6px; }
+  .a-field input[type="text"], .a-field select, .a-field textarea {
+    width: 100%; padding: 10px 12px; font-family: var(--font-body); font-size: .92rem;
+    border: 1px solid var(--border); border-radius: 3px; background: var(--white); color: var(--text);
+  }
+  .a-field textarea { resize: vertical; min-height: 70px; }
+  .a-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .a-check { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .a-check input { width: 16px; height: 16px; }
+
+  #output {
+    width: 100%; min-height: 200px; font-family: 'Courier New', monospace; font-size: .82rem;
+    padding: 14px; border: 1px solid var(--border); border-radius: 3px; background: var(--cream);
+    white-space: pre-wrap; margin-top: 20px;
+  }
+  .steps { background: var(--cream); border-radius: 4px; padding: 16px 20px; margin-top: 24px; font-size: .86rem; line-height: 1.7; }
+  .steps b { color: var(--primary); }
+  .btn-row { margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>New Artwork Details</h1>
+  <p>Fill this in. At the bottom, copy the summary and paste it to Claude in chat — I'll make the code changes for you.</p>
+
+  <div class="a-field">
+    <label>Title</label>
+    <input type="text" id="f-title" placeholder="e.g. Evening Bloom">
+  </div>
+
+  <div class="a-row">
+    <div class="a-field">
+      <label>Category</label>
+      <select id="f-category">
+        <option value="Painting">Painting</option>
+        <option value="Sketch">Sketch</option>
+      </select>
+    </div>
+    <div class="a-field">
+      <label>Price</label>
+      <input type="text" id="f-price" placeholder="e.g. ₹3,500">
+    </div>
+  </div>
+
+  <div class="a-row">
+    <div class="a-field">
+      <label>Dimensions</label>
+      <input type="text" id="f-dim" placeholder='e.g. 12" × 16"'>
+    </div>
+    <div class="a-field">
+      <label>Medium</label>
+      <input type="text" id="f-medium" placeholder="e.g. Acrylic on Canvas">
+    </div>
+  </div>
+
+  <div class="a-field">
+    <label>Description</label>
+    <textarea id="f-desc" placeholder="A short, warm description of the piece..."></textarea>
+  </div>
+
+  <div class="a-field a-check">
+    <input type="checkbox" id="f-available" checked>
+    <label for="f-available" style="margin:0;">Available for sale</label>
+  </div>
+
+  <div class="a-field">
+    <label>Image filename</label>
+    <input type="text" id="f-filename" placeholder="auto-filled from title">
+  </div>
+  <p style="font-size:.8rem;color:var(--text-light);margin-top:-10px;">Save your photo into the <code>images</code> folder using exactly this filename.</p>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-copy">Copy Summary</button>
+  </div>
+
+  <div id="output"></div>
+
+  <div class="steps">
+    <b>1.</b> Copy your photo into the <code>images</code> folder, named as shown above.<br>
+    <b>2.</b> Click "Copy Summary" and paste it to Claude in chat.<br>
+    <b>3.</b> Claude updates the site for you — no code needed.
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let filenameTouched = false;
+
+function slugify(str) {
+  return (str || 'untitled').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'untitled';
+}
+
+function update() {
+  if (!filenameTouched) {
+    $('f-filename').value = slugify($('f-title').value) + '.jpg';
+  }
+  const summary =
+`New Artwork
+Title: ${$('f-title').value || '(untitled)'}
+Category: ${$('f-category').value}
+Price: ${$('f-price').value}
+Dimensions: ${$('f-dim').value}
+Medium: ${$('f-medium').value}
+Available: ${$('f-available').checked ? 'Yes' : 'No, sold'}
+Image filename: ${$('f-filename').value}
+Description: ${$('f-desc').value}`;
+  $('output').textContent = summary;
+}
+
+['f-title','f-category','f-price','f-dim','f-medium','f-desc','f-available']
+  .forEach(id => $(id).addEventListener('input', update));
+$('f-filename').addEventListener('input', () => filenameTouched = true);
+
+$('btn-copy').addEventListener('click', async () => {
+  await navigator.clipboard.writeText($('output').textContent);
+  const btn = $('btn-copy');
+  const old = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = old, 1400);
+});
+
+update();
+</script>
+</body>
+</html>
